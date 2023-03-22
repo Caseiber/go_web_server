@@ -74,6 +74,39 @@ func GetProduct(id string) (products.Product, error) {
 	return products.Product{}, ErrNoProduct
 }
 
+func UpdateProduct(id string, product products.Product) ([]byte, error) {
+	data, err := products.GetProducts()
+	if err != nil {
+		return []byte{}, err
+	}
+
+	var productList []products.Product
+	err = json.Unmarshal(data, &productList)
+	if err != nil {
+		return []byte{}, err
+	}
+
+	for i := 0; i < len(productList); i++ {
+		if productList[i].ID == id {
+			productList[i] = product
+
+			err = products.OverwriteProducts(productList)
+			if err != nil {
+				return []byte{}, err
+			}
+
+			data, err := products.GetProducts()
+			if err != nil {
+				return []byte{}, err
+			}
+
+			return data, nil
+		}
+	}
+
+	return []byte{}, ErrNoProduct
+}
+
 func DeleteProduct(id string) error {
 	data, err := products.GetProducts()
 	if err != nil {
@@ -106,7 +139,7 @@ func DeleteProduct(id string) error {
 
 func removeElement(productList []products.Product, index int) ([]products.Product, error) {
 	if index < 0 || index >= len(productList) {
-		return []products.Product{}, errors.New("invalid index for deletion")
+		return productList, errors.New("invalid index for deletion")
 	}
 
 	var updatedProducts []products.Product = make([]products.Product, 0)
