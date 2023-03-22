@@ -1,0 +1,30 @@
+[
+    {
+        "id": "c98e6fe3-7986-11eb-9b46-98fa9b64e75b",
+        "name": "Latte",
+        "description": "Artisan creamy dream coffee beverage",
+        "price": 6,
+        "isAvailable": true
+    },
+    {
+        "id": "e7f31219-7986-11eb-bd65-98fa9b64e75b",
+        "name": "Cappuccino",
+        "description": "A latte but more hipster",
+        "price": 5,
+        "isAvailable": false
+    },
+    {
+        "id": "f82fa5ec-7986-11eb-a8e3-98fa9b64e75b",
+        "name": "Dirty Chai",
+        "description": "Chai with shot of espresso",
+        "price": 4,
+        "isAvailable": true
+    },
+    {
+        "id": "0",
+        "name": "Mocha",
+        "description": "Like a latte, but now there's chocolate",
+        "price": 4.5,
+        "isAvailable": true
+    }
+]
