@@ -2,16 +2,16 @@ package handlers
 
 import (
 	"encoding/json"
-	"errors"
+	"fmt"
 	"io"
 	"net/http"
 
 	"go_web_server/products"
+
+	"github.com/gorilla/mux"
 )
 
-var ErrNoProduct = errors.New("no product found")
-
-func ListProducts() http.HandlerFunc {
+func ListProductsHandler() http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
 		productList, err := products.GetProducts()
 		if err != nil {
@@ -25,7 +25,7 @@ func ListProducts() http.HandlerFunc {
 	}
 }
 
-func CreateProduct() http.HandlerFunc {
+func CreateProductHandler() http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
 		data, err := io.ReadAll(r.Body)
 		if err != nil {
@@ -53,98 +53,67 @@ func CreateProduct() http.HandlerFunc {
 
 }
 
-func GetProduct(id string) (products.Product, error) {
-	data, err := products.GetProducts()
-	if err != nil {
-		return products.Product{}, err
-	}
-
-	var productList []products.Product
-	err = json.Unmarshal(data, &productList)
-	if err != nil {
-		return products.Product{}, err
-	}
-
-	for i := 0; i < len(productList); i++ {
-		if productList[i].ID == id {
-			return productList[i], nil
+func GetProductHandler() http.HandlerFunc {
+	return func(rw http.ResponseWriter, r *http.Request) {
+		productID := mux.Vars(r)["id"]
+		product, err := products.GetProduct(productID)
+		if err != nil {
+			rw.WriteHeader(http.StatusInternalServerError)
+			return
 		}
-	}
 
-	return products.Product{}, ErrNoProduct
+		data, err := json.Marshal(product)
+		if err != nil {
+			rw.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		rw.WriteHeader(http.StatusFound)
+		rw.Header().Add("content-type", "application/json")
+		rw.Write(data)
+	}
 }
 
-func UpdateProduct(id string, product products.Product) ([]byte, error) {
-	data, err := products.GetProducts()
-	if err != nil {
-		return []byte{}, err
-	}
-
-	var productList []products.Product
-	err = json.Unmarshal(data, &productList)
-	if err != nil {
-		return []byte{}, err
-	}
-
-	for i := 0; i < len(productList); i++ {
-		if productList[i].ID == id {
-			productList[i] = product
-
-			err = products.OverwriteProducts(productList)
-			if err != nil {
-				return []byte{}, err
-			}
-
-			data, err := products.GetProducts()
-			if err != nil {
-				return []byte{}, err
-			}
-
-			return data, nil
+func DeleteProductHandler() http.HandlerFunc {
+	return func(rw http.ResponseWriter, r *http.Request) {
+		productID := mux.Vars(r)["id"]
+		err := products.DeleteProduct(productID)
+		fmt.Println(err)
+		if err != nil {
+			rw.WriteHeader(http.StatusInternalServerError)
+			return
 		}
-	}
 
-	return []byte{}, ErrNoProduct
+		rw.WriteHeader(http.StatusAccepted)
+		rw.Header().Add("content-type", "application/json")
+	}
 }
 
-func DeleteProduct(id string) error {
-	data, err := products.GetProducts()
-	if err != nil {
-		return err
-	}
-
-	var productList []products.Product
-	err = json.Unmarshal(data, &productList)
-	if err != nil {
-		return err
-	}
-
-	for i := 0; i < len(productList); i++ {
-
-		if productList[i].ID == id {
-			productList, err = removeElement(productList, i)
-			if err != nil {
-				return err
-			}
-
-			err = products.OverwriteProducts(productList)
-			if err != nil {
-				return err
-			}
+func UpdateProductHandler() http.HandlerFunc {
+	return func(rw http.ResponseWriter, r *http.Request) {
+		data, err := io.ReadAll(r.Body)
+		if err != nil {
+			rw.WriteHeader(http.StatusBadRequest)
+			return
 		}
+
+		var updatedProduct products.Product
+		err = json.Unmarshal(data, &updatedProduct)
+		if err != nil {
+			rw.WriteHeader(http.StatusExpectationFailed)
+			return
+		}
+
+		productID := mux.Vars(r)["id"]
+		updatedProducts, err := products.UpdateProduct(productID, updatedProduct)
+		if err != nil {
+			fmt.Println(err)
+			rw.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		rw.WriteHeader(http.StatusAccepted)
+		rw.Header().Add("content-type", "application/json")
+		rw.Write(updatedProducts)
 	}
-
-	return ErrNoProduct
-}
-
-func removeElement(productList []products.Product, index int) ([]products.Product, error) {
-	if index < 0 || index >= len(productList) {
-		return productList, errors.New("invalid index for deletion")
-	}
-
-	var updatedProducts []products.Product = make([]products.Product, 0)
-	updatedProducts = append(updatedProducts, productList[0:index]...)
-	updatedProducts = append(updatedProducts, productList[index+1:]...)
-
-	return updatedProducts, nil
 }
