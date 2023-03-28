@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"go_web_server/handlers"
+	"go_web_server/products"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -11,11 +12,11 @@ import (
 func main() {
 	router := mux.NewRouter()
 
-	router.Handle("/products", handlers.ListProductsHandler()).Methods(("GET"))
-	router.Handle("/products", handlers.CreateProductHandler()).Methods(("POST"))
-	router.Handle("/products/{id}", handlers.GetProductHandler()).Methods(("GET"))
-	router.Handle("/products/{id}", handlers.DeleteProductHandler()).Methods(("DELETE"))
-	router.Handle("/products/{id}", handlers.UpdateProductHandler()).Methods(("PUT"))
+	router.Handle("/products", handlers.Service{}.ListProductsHandler(products.Store{})).Methods(("GET"))
+	router.Handle("/products", handlers.Service{}.CreateProductHandler(products.Store{})).Methods(("POST"))
+	router.Handle("/products/{id}", handlers.Service{}.GetProductHandler(products.Store{})).Methods(("GET"))
+	router.Handle("/products/{id}", handlers.Service{}.DeleteProductHandler(products.Store{})).Methods(("DELETE"))
+	router.Handle("/products/{id}", handlers.Service{}.UpdateProductHandler(products.Store{})).Methods(("PUT"))
 
 	server := http.Server{
 		Addr:    ":9090",

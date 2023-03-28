@@ -11,9 +11,19 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func ListProductsHandler() http.HandlerFunc {
+type ProductService interface {
+	ListProductsHandler(ps products.ProductStore) http.HandlerFunc
+	CreateProductHandler(ps products.ProductStore) http.HandlerFunc
+	GetProductHandler(ps products.ProductStore) http.HandlerFunc
+	UpdateProductHandler(ps products.ProductStore) http.HandlerFunc
+	DeleteProductHandler(ps products.ProductStore) http.HandlerFunc
+}
+
+type Service struct{}
+
+func (s Service) ListProductsHandler(ps products.ProductStore) http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
-		productList, err := products.GetProducts()
+		productList, err := ps.GetProducts()
 		if err != nil {
 			rw.WriteHeader(http.StatusInternalServerError)
 			return
@@ -25,7 +35,7 @@ func ListProductsHandler() http.HandlerFunc {
 	}
 }
 
-func CreateProductHandler() http.HandlerFunc {
+func (s Service) CreateProductHandler(ps products.ProductStore) http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
 		data, err := io.ReadAll(r.Body)
 		if err != nil {
@@ -41,7 +51,7 @@ func CreateProductHandler() http.HandlerFunc {
 			return
 		}
 
-		products.AddProduct(product)
+		ps.AddProduct(product)
 		if err != nil {
 			rw.WriteHeader(http.StatusInternalServerError)
 			return
@@ -53,10 +63,10 @@ func CreateProductHandler() http.HandlerFunc {
 
 }
 
-func GetProductHandler() http.HandlerFunc {
+func (s Service) GetProductHandler(ps products.ProductStore) http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
 		productID := mux.Vars(r)["id"]
-		product, err := products.GetProduct(productID)
+		product, err := ps.GetProduct(productID)
 		if err != nil {
 			rw.WriteHeader(http.StatusInternalServerError)
 			return
@@ -74,11 +84,10 @@ func GetProductHandler() http.HandlerFunc {
 	}
 }
 
-func DeleteProductHandler() http.HandlerFunc {
+func (s Service) DeleteProductHandler(ps products.ProductStore) http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
 		productID := mux.Vars(r)["id"]
-		err := products.DeleteProduct(productID)
-		fmt.Println(err)
+		err := ps.DeleteProduct(productID)
 		if err != nil {
 			rw.WriteHeader(http.StatusInternalServerError)
 			return
@@ -89,7 +98,7 @@ func DeleteProductHandler() http.HandlerFunc {
 	}
 }
 
-func UpdateProductHandler() http.HandlerFunc {
+func (s Service) UpdateProductHandler(ps products.ProductStore) http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
 		data, err := io.ReadAll(r.Body)
 		if err != nil {
@@ -105,7 +114,7 @@ func UpdateProductHandler() http.HandlerFunc {
 		}
 
 		productID := mux.Vars(r)["id"]
-		updatedProducts, err := products.UpdateProduct(productID, updatedProduct)
+		updatedProducts, err := ps.UpdateProduct(productID, updatedProduct)
 		if err != nil {
 			fmt.Println(err)
 			rw.WriteHeader(http.StatusInternalServerError)

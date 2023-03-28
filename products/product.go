@@ -11,14 +11,24 @@ const DataLocation = "./data/data.json"
 var ErrNoProduct = errors.New("no product found")
 
 type Product struct {
-	ID          string  `json:"id"`
+	ID          int     `json:"id"`
 	Name        string  `json:"name"`
 	Description string  `json:"description"`
 	Price       float64 `json:"price"`
 	IsAvailable bool    `json:"isAvailable"`
 }
 
-func GetProducts() ([]byte, error) {
+type ProductStore interface {
+	GetProducts() ([]byte, error)
+	GetProduct(id int) (Product, error)
+	AddProduct(product Product) error
+	UpdateProduct(id int, product Product) ([]byte, error)
+	DeleteProduct(id int) error
+}
+
+type Store struct{}
+
+func (ps Store) GetProducts() ([]byte, error) {
 	data, err := os.ReadFile(DataLocation)
 	if err != nil {
 		return nil, err
@@ -27,8 +37,8 @@ func GetProducts() ([]byte, error) {
 	return data, nil
 }
 
-func AddProduct(product Product) error {
-	data, err := GetProducts()
+func (ps Store) AddProduct(product Product) error {
+	data, err := ps.GetProducts()
 	if err != nil {
 		return err
 	}
@@ -54,8 +64,8 @@ func AddProduct(product Product) error {
 	return nil
 }
 
-func GetProduct(id string) (Product, error) {
-	data, err := GetProducts()
+func (ps Store) GetProduct(id int) (Product, error) {
+	data, err := ps.GetProducts()
 	if err != nil {
 		return Product{}, err
 	}
@@ -75,8 +85,8 @@ func GetProduct(id string) (Product, error) {
 	return Product{}, ErrNoProduct
 }
 
-func UpdateProduct(id string, product Product) ([]byte, error) {
-	data, err := GetProducts()
+func (ps Store) UpdateProduct(id int, product Product) ([]byte, error) {
+	data, err := ps.GetProducts()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -95,12 +105,12 @@ func UpdateProduct(id string, product Product) ([]byte, error) {
 
 			productList[i] = product
 
-			err = OverwriteProducts(productList)
+			err = overwriteProducts(productList)
 			if err != nil {
 				return []byte{}, err
 			}
 
-			data, err := GetProducts()
+			data, err := ps.GetProducts()
 			if err != nil {
 				return []byte{}, err
 			}
@@ -112,8 +122,8 @@ func UpdateProduct(id string, product Product) ([]byte, error) {
 	return []byte{}, ErrNoProduct
 }
 
-func DeleteProduct(id string) error {
-	data, err := GetProducts()
+func (ps Store) DeleteProduct(id int) error {
+	data, err := ps.GetProducts()
 	if err != nil {
 		return err
 	}
@@ -131,7 +141,7 @@ func DeleteProduct(id string) error {
 				return err
 			}
 
-			err = OverwriteProducts(productList)
+			err = overwriteProducts(productList)
 			if err != nil {
 				return err
 			}
@@ -139,6 +149,20 @@ func DeleteProduct(id string) error {
 	}
 
 	return ErrNoProduct
+}
+
+func overwriteProducts(products []Product) error {
+	updatedProducts, err := json.Marshal(products)
+	if err != nil {
+		return err
+	}
+
+	err = os.WriteFile(DataLocation, updatedProducts, os.ModePerm)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func removeElement(productList []Product, index int) ([]Product, error) {
@@ -151,18 +175,4 @@ func removeElement(productList []Product, index int) ([]Product, error) {
 	updatedProducts = append(updatedProducts, productList[index+1:]...)
 
 	return updatedProducts, nil
-}
-
-func OverwriteProducts(products []Product) error {
-	updatedProducts, err := json.Marshal(products)
-	if err != nil {
-		return err
-	}
-
-	err = os.WriteFile(DataLocation, updatedProducts, os.ModePerm)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
