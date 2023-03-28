@@ -28,6 +28,7 @@ type ProductStore interface {
 
 type Store struct{}
 
+// Returns a list of all the products
 func (ps Store) GetProducts() ([]byte, error) {
 	data, err := os.ReadFile(DataLocation)
 	if err != nil {
@@ -37,6 +38,7 @@ func (ps Store) GetProducts() ([]byte, error) {
 	return data, nil
 }
 
+// Adds a new product
 func (ps Store) AddProduct(product Product) error {
 	data, err := ps.GetProducts()
 	if err != nil {
@@ -64,6 +66,7 @@ func (ps Store) AddProduct(product Product) error {
 	return nil
 }
 
+// Gets an individual product
 func (ps Store) GetProduct(id int) (Product, error) {
 	data, err := ps.GetProducts()
 	if err != nil {
@@ -85,6 +88,7 @@ func (ps Store) GetProduct(id int) (Product, error) {
 	return Product{}, ErrNoProduct
 }
 
+// Updates the product with the provided id
 func (ps Store) UpdateProduct(id int, product Product) ([]byte, error) {
 	data, err := ps.GetProducts()
 	if err != nil {
@@ -122,6 +126,7 @@ func (ps Store) UpdateProduct(id int, product Product) ([]byte, error) {
 	return []byte{}, ErrNoProduct
 }
 
+// Removes a product; hard deletion
 func (ps Store) DeleteProduct(id int) error {
 	data, err := ps.GetProducts()
 	if err != nil {
@@ -151,6 +156,7 @@ func (ps Store) DeleteProduct(id int) error {
 	return ErrNoProduct
 }
 
+// Overwrites the entire products file; used for updating or deleting
 func overwriteProducts(products []Product) error {
 	updatedProducts, err := json.Marshal(products)
 	if err != nil {
@@ -165,6 +171,7 @@ func overwriteProducts(products []Product) error {
 	return nil
 }
 
+// Removes one element from a list of products; used for deletion
 func removeElement(productList []Product, index int) ([]Product, error) {
 	if index < 0 || index >= len(productList) {
 		return productList, errors.New("invalid index for deletion")

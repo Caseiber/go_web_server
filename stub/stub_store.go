@@ -2,6 +2,7 @@ package stub
 
 import "go_web_server/products"
 
+// Stubbing out the store to allow for unit testing
 type Stub struct{}
 
 func (s Stub) GetProducts() ([]byte, error) {

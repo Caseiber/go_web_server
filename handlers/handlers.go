@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 
 	"go_web_server/products"
 
@@ -65,7 +66,12 @@ func (s Service) CreateProductHandler(ps products.ProductStore) http.HandlerFunc
 
 func (s Service) GetProductHandler(ps products.ProductStore) http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
-		productID := mux.Vars(r)["id"]
+		productID, err := strconv.Atoi(mux.Vars(r)["id"])
+		if err != nil {
+			rw.WriteHeader(http.StatusExpectationFailed)
+			return
+		}
+
 		product, err := ps.GetProduct(productID)
 		if err != nil {
 			rw.WriteHeader(http.StatusInternalServerError)
@@ -86,8 +92,13 @@ func (s Service) GetProductHandler(ps products.ProductStore) http.HandlerFunc {
 
 func (s Service) DeleteProductHandler(ps products.ProductStore) http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
-		productID := mux.Vars(r)["id"]
-		err := ps.DeleteProduct(productID)
+		productID, err := strconv.Atoi(mux.Vars(r)["id"])
+		if err != nil {
+			rw.WriteHeader(http.StatusExpectationFailed)
+			return
+		}
+
+		err = ps.DeleteProduct(productID)
 		if err != nil {
 			rw.WriteHeader(http.StatusInternalServerError)
 			return
@@ -113,7 +124,12 @@ func (s Service) UpdateProductHandler(ps products.ProductStore) http.HandlerFunc
 			return
 		}
 
-		productID := mux.Vars(r)["id"]
+		productID, err := strconv.Atoi(mux.Vars(r)["id"])
+		if err != nil {
+			rw.WriteHeader(http.StatusExpectationFailed)
+			return
+		}
+
 		updatedProducts, err := ps.UpdateProduct(productID, updatedProduct)
 		if err != nil {
 			fmt.Println(err)
