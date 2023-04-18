@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"strconv"
 
 	"go_web_server/products"
 
@@ -17,12 +16,21 @@ func ListProducts(ps products.ProductStore) http.HandlerFunc {
 		productList, err := ps.GetProducts()
 		if err != nil {
 			rw.WriteHeader(http.StatusInternalServerError)
+			fmt.Println(err)
 			return
 		}
 
 		rw.Header().Add("content-type", "application/json")
 		rw.WriteHeader(http.StatusFound)
-		rw.Write(productList)
+
+		data, err := json.Marshal(productList)
+		if err != nil {
+			fmt.Println(err)
+			rw.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		rw.Write(data)
 	}
 }
 
@@ -42,7 +50,7 @@ func CreateProduct(ps products.ProductStore) http.HandlerFunc {
 			return
 		}
 
-		ps.AddProduct(product)
+		err = ps.AddProduct(product)
 		if err != nil {
 			rw.WriteHeader(http.StatusInternalServerError)
 			return
@@ -56,11 +64,7 @@ func CreateProduct(ps products.ProductStore) http.HandlerFunc {
 
 func GetProductByID(ps products.ProductStore) http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
-		productID, err := strconv.Atoi(mux.Vars(r)["id"])
-		if err != nil {
-			rw.WriteHeader(http.StatusExpectationFailed)
-			return
-		}
+		productID := mux.Vars(r)["id"]
 
 		product, err := ps.GetProduct(productID)
 		if err != nil {
@@ -82,13 +86,9 @@ func GetProductByID(ps products.ProductStore) http.HandlerFunc {
 
 func DeleteProductByID(ps products.ProductStore) http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
-		productID, err := strconv.Atoi(mux.Vars(r)["id"])
-		if err != nil {
-			rw.WriteHeader(http.StatusExpectationFailed)
-			return
-		}
+		productID := mux.Vars(r)["id"]
 
-		err = ps.DeleteProduct(productID)
+		err := ps.DeleteProduct(productID)
 		if err != nil {
 			rw.WriteHeader(http.StatusInternalServerError)
 			return
@@ -114,11 +114,7 @@ func UpdateProductByID(ps products.ProductStore) http.HandlerFunc {
 			return
 		}
 
-		productID, err := strconv.Atoi(mux.Vars(r)["id"])
-		if err != nil {
-			rw.WriteHeader(http.StatusExpectationFailed)
-			return
-		}
+		productID := mux.Vars(r)["id"]
 
 		updatedProducts, err := ps.UpdateProduct(productID, updatedProduct)
 		if err != nil {
@@ -129,6 +125,12 @@ func UpdateProductByID(ps products.ProductStore) http.HandlerFunc {
 
 		rw.WriteHeader(http.StatusAccepted)
 		rw.Header().Add("content-type", "application/json")
-		rw.Write(updatedProducts)
+		marshaledData, err := json.Marshal(updatedProducts)
+		if err != nil {
+			rw.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		rw.Write(marshaledData)
 	}
 }

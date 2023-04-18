@@ -11,7 +11,7 @@ const DataLocation = "./data/data.json"
 var ErrNoProduct = errors.New("no product found")
 
 type Product struct {
-	ID          int     `json:"id"`
+	ID          string  `json:"id"`
 	Name        string  `json:"name"`
 	Description string  `json:"description"`
 	Price       float64 `json:"price"`
@@ -19,35 +19,35 @@ type Product struct {
 }
 
 type ProductStore interface {
-	GetProducts() ([]byte, error)
-	GetProduct(id int) (Product, error)
+	GetProducts() ([]Product, error)
+	GetProduct(id string) (Product, error)
 	AddProduct(product Product) error
-	UpdateProduct(id int, product Product) ([]byte, error)
-	DeleteProduct(id int) error
+	UpdateProduct(id string, product Product) ([]Product, error)
+	DeleteProduct(id string) error
 }
 
 type Store struct{}
 
 // Returns a list of all the products
-func (ps Store) GetProducts() ([]byte, error) {
+func (ps Store) GetProducts() ([]Product, error) {
 	data, err := os.ReadFile(DataLocation)
 	if err != nil {
 		return nil, err
 	}
 
-	return data, nil
+	var allProducts []Product
+
+	err = json.Unmarshal(data, &allProducts)
+	if err != nil {
+		return nil, err
+	}
+
+	return allProducts, nil
 }
 
 // Adds a new product
 func (ps Store) AddProduct(product Product) error {
-	data, err := ps.GetProducts()
-	if err != nil {
-		return err
-	}
-
-	var productList []Product
-
-	err = json.Unmarshal(data, &productList)
+	productList, err := ps.GetProducts()
 	if err != nil {
 		return err
 	}
@@ -67,14 +67,8 @@ func (ps Store) AddProduct(product Product) error {
 }
 
 // Gets an individual product
-func (ps Store) GetProduct(id int) (Product, error) {
-	data, err := ps.GetProducts()
-	if err != nil {
-		return Product{}, err
-	}
-
-	var productList []Product
-	err = json.Unmarshal(data, &productList)
+func (ps Store) GetProduct(id string) (Product, error) {
+	productList, err := ps.GetProducts()
 	if err != nil {
 		return Product{}, err
 	}
@@ -89,52 +83,40 @@ func (ps Store) GetProduct(id int) (Product, error) {
 }
 
 // Updates the product with the provided id
-func (ps Store) UpdateProduct(id int, product Product) ([]byte, error) {
-	data, err := ps.GetProducts()
+func (ps Store) UpdateProduct(id string, product Product) ([]Product, error) {
+	productList, err := ps.GetProducts()
 	if err != nil {
-		return []byte{}, err
-	}
-
-	var productList []Product
-	err = json.Unmarshal(data, &productList)
-	if err != nil {
-		return []byte{}, err
+		return nil, err
 	}
 
 	for i := 0; i < len(productList); i++ {
 		if productList[i].ID == id {
 			if productList[i].ID != product.ID {
-				return []byte{}, errors.New("updated id did not match original")
+				return nil, errors.New("updated id did not match original")
 			}
 
 			productList[i] = product
 
 			err = overwriteProducts(productList)
 			if err != nil {
-				return []byte{}, err
+				return nil, err
 			}
 
-			data, err := ps.GetProducts()
+			updatedProductList, err := ps.GetProducts()
 			if err != nil {
-				return []byte{}, err
+				return nil, err
 			}
 
-			return data, nil
+			return updatedProductList, nil
 		}
 	}
 
-	return []byte{}, ErrNoProduct
+	return nil, ErrNoProduct
 }
 
 // Removes a product; hard deletion
-func (ps Store) DeleteProduct(id int) error {
-	data, err := ps.GetProducts()
-	if err != nil {
-		return err
-	}
-
-	var productList []Product
-	err = json.Unmarshal(data, &productList)
+func (ps Store) DeleteProduct(id string) error {
+	productList, err := ps.GetProducts()
 	if err != nil {
 		return err
 	}
