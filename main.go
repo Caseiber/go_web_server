@@ -12,11 +12,11 @@ import (
 func main() {
 	router := mux.NewRouter()
 
-	router.Handle("/products", handlers.Service{}.ListProductsHandler(products.Store{})).Methods(("GET"))
-	router.Handle("/products", handlers.Service{}.CreateProductHandler(products.Store{})).Methods(("POST"))
-	router.Handle("/products/{id}", handlers.Service{}.GetProductHandler(products.Store{})).Methods(("GET"))
-	router.Handle("/products/{id}", handlers.Service{}.DeleteProductHandler(products.Store{})).Methods(("DELETE"))
-	router.Handle("/products/{id}", handlers.Service{}.UpdateProductHandler(products.Store{})).Methods(("PUT"))
+	router.Handle("/products", handlers.ListProducts(products.Store{})).Methods(("GET"))
+	router.Handle("/products", handlers.CreateProduct(products.Store{})).Methods(("POST"))
+	router.Handle("/products/{id}", handlers.GetProductByID(products.Store{})).Methods(("GET"))
+	router.Handle("/products/{id}", handlers.DeleteProductByID(products.Store{})).Methods(("DELETE"))
+	router.Handle("/products/{id}", handlers.UpdateProductByID(products.Store{})).Methods(("PUT"))
 
 	server := http.Server{
 		Addr:    ":9090",

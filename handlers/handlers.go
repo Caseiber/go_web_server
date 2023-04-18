@@ -12,17 +12,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-type ProductService interface {
-	ListProductsHandler(ps products.ProductStore) http.HandlerFunc
-	CreateProductHandler(ps products.ProductStore) http.HandlerFunc
-	GetProductHandler(ps products.ProductStore) http.HandlerFunc
-	UpdateProductHandler(ps products.ProductStore) http.HandlerFunc
-	DeleteProductHandler(ps products.ProductStore) http.HandlerFunc
-}
-
-type Service struct{}
-
-func (s Service) ListProductsHandler(ps products.ProductStore) http.HandlerFunc {
+func ListProducts(ps products.ProductStore) http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
 		productList, err := ps.GetProducts()
 		if err != nil {
@@ -36,7 +26,7 @@ func (s Service) ListProductsHandler(ps products.ProductStore) http.HandlerFunc 
 	}
 }
 
-func (s Service) CreateProductHandler(ps products.ProductStore) http.HandlerFunc {
+func CreateProduct(ps products.ProductStore) http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
 		data, err := io.ReadAll(r.Body)
 		if err != nil {
@@ -64,7 +54,7 @@ func (s Service) CreateProductHandler(ps products.ProductStore) http.HandlerFunc
 
 }
 
-func (s Service) GetProductHandler(ps products.ProductStore) http.HandlerFunc {
+func GetProductByID(ps products.ProductStore) http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
 		productID, err := strconv.Atoi(mux.Vars(r)["id"])
 		if err != nil {
@@ -90,7 +80,7 @@ func (s Service) GetProductHandler(ps products.ProductStore) http.HandlerFunc {
 	}
 }
 
-func (s Service) DeleteProductHandler(ps products.ProductStore) http.HandlerFunc {
+func DeleteProductByID(ps products.ProductStore) http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
 		productID, err := strconv.Atoi(mux.Vars(r)["id"])
 		if err != nil {
@@ -109,7 +99,7 @@ func (s Service) DeleteProductHandler(ps products.ProductStore) http.HandlerFunc
 	}
 }
 
-func (s Service) UpdateProductHandler(ps products.ProductStore) http.HandlerFunc {
+func UpdateProductByID(ps products.ProductStore) http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
 		data, err := io.ReadAll(r.Body)
 		if err != nil {
